@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pastillero — Recordatorio de medicamentos</title>
+<style>
+  :root{
+    --bottle-green:#1F3A34;
+    --bottle-green-light:#2C4F47;
+    --label-cream:#F1ECDE;
+    --amber:#C97A3D;
+    --amber-dark:#A85F27;
+    --ink:#2A2620;
+    --paper-line:#D8CEB6;
+    --alert-coral:#C0503C;
+    --ok-sage:#6E8B6A;
+    --muted:#7A6F58;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bottle-green);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.04), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(255,255,255,0.03), transparent 45%);
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    color:var(--ink);
+    padding:32px 16px 80px;
+  }
+
+  .wrap{ max-width:680px; margin:0 auto; }
+
+  header.app-header{ text-align:center; margin-bottom:28px; }
+
+  .eyebrow{
+    font-family: 'Courier New', monospace;
+    letter-spacing:.28em;
+    font-size:11px;
+    color:#B7C9C1;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+
+  h1{
+    font-size:2.1rem;
+    color:var(--label-cream);
+    margin:0 0 6px;
+    font-weight:700;
+    letter-spacing:.01em;
+  }
+
+  .sub{
+    color:#AABDB4;
+    font-size:.92rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .permission-bar{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:rgba(201,122,61,0.16);
+    border:1px solid rgba(201,122,61,0.5);
+    color:var(--label-cream);
+    padding:12px 16px;
+    border-radius:10px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:.88rem;
+    margin-bottom:22px;
+  }
+  .permission-bar button{
+    flex-shrink:0;
+    background:var(--amber);
+    border:none;
+    color:#fff;
+    padding:8px 14px;
+    border-radius:7px;
+    font-weight:600;
+    cursor:pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .ring-banner{
+    display:none;
+    background:var(--alert-coral);
+    color:#fff;
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:20px;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    box-shadow:0 10px 26px rgba(192,80,60,0.45);
+    animation: pulseBanner 1s ease-in-out infinite;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  @keyframes pulseBanner{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.015); }
+  }
+  .ring-banner strong{ display:block; font-size:1.02rem; margin-bottom:2px; }
+  .ring-banner span{ font-size:.82rem; opacity:.9; }
+  .ring-banner .ring-actions{ display:flex; gap:8px; flex-shrink:0; }
+  .ring-banner button{
+    border:none;
+    padding:9px 14px;
+    border-radius:8px;
+    font-weight:700;
+    font-size:.82rem;
+    cursor:pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .btn-taken{ background:#fff; color:var(--alert-coral); }
+
+  .slip{
+    background:var(--label-cream);
+    border-radius:4px;
+    padding:22px 24px 24px;
+    box-shadow:0 14px 30px rgba(0,0,0,0.28);
+    position:relative;
+    margin-bottom:34px;
+  }
+  .slip::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:6px;
+    background:repeating-linear-gradient(90deg, var(--amber) 0 14px, transparent 14px 20px);
+    border-radius:4px 4px 0 0;
+  }
+  .slip-title{
+    font-family: 'Courier New', monospace;
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    font-size:11.5px;
+    color:var(--amber-dark);
+    margin:6px 0 16px;
+    border-bottom:1px dashed var(--paper-line);
+    padding-bottom:10px;
+  }
+
+  .field-row{ display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .field{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:5px; }
+  .field label{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+  .field input, .field select{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:.95rem;
+    padding:10px 11px;
+    border-radius:6px;
+    border:1px solid var(--paper-line);
+    background:#fff;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline:2px solid var(--amber); outline-offset:1px; }
+  .field-hint{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:.72rem;
+    color:var(--muted);
+  }
+
+  .add-btn{
+    margin-top:6px;
+    width:100%;
+    background:var(--amber);
+    color:#fff;
+    border:none;
+    padding:12px;
+    border-radius:7px;
+    font-weight:700;
+    font-size:.95rem;
+    cursor:pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing:.02em;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .add-btn:hover{ background:var(--amber-dark); }
+  .add-btn:active{ transform:scale(.99); }
+
+  .section-heading{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    color:var(--label-cream);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin-bottom:12px;
+    margin-top:34px;
+  }
+  .section-heading h2{
+    font-family: 'Iowan Old Style', Georgia, serif;
+    font-size:1.15rem;
+    margin:0;
+    color:var(--label-cream);
+  }
+  .section-heading span{ font-size:.78rem; color:#9FB2A9; }
+
+  .empty-state{
+    background:rgba(241,236,222,0.06);
+    border:1px dashed rgba(241,236,222,0.25);
+    border-radius:10px;
+    padding:26px 20px;
+    text-align:center;
+    color:#AABDB4;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:.88rem;
+  }
+
+  .pill-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--label-cream);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.18);
+    border-left:6px solid var(--amber);
+  }
+  .bottle-icon{ flex-shrink:0; width:36px; height:36px; }
+  .pill-info{ flex:1; min-width:0; }
+  .pill-name{
+    font-weight:700;
+    font-size:1rem;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .pill-meta{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:.76rem;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .pill-next{
+    font-family: 'Courier New', monospace;
+    font-size:.95rem;
+    font-weight:700;
+    color:var(--amber-dark);
+    flex-shrink:0;
+    text-align:right;
+    white-space:nowrap;
+  }
+  .pill-next small{
+    display:block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight:500;
+    font-size:.65rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .remove-btn{
+    flex-shrink:0;
+    background:none;
+    border:none;
+    color:#9C8F72;
+    font-size:1.25rem;
+    line-height:1;
+    cursor:pointer;
+    padding:4px 6px;
+    border-radius:6px;
+  }
+  .remove-btn:hover{ color:var(--alert-coral); background:rgba(192,80,60,0.1); }
+
+  .day-group{ margin-bottom:16px; }
+  .day-label{
+    font-family: 'Courier New', monospace;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:.72rem;
+    color:#B7C9C1;
+    margin-bottom:8px;
+    padding-left:2px;
+  }
+  .day-label.today{ color:var(--amber); }
+
+  .dose-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:rgba(241,236,222,0.94);
+    border-radius:8px;
+    padding:10px 14px;
+    margin-bottom:6px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .dose-row.taken{ opacity:.55; }
+  .dose-row.missed{ border-left:4px solid var(--alert-coral); }
+  .dose-time{
+    font-family:'Courier New', monospace;
+    font-weight:700;
+    font-size:.92rem;
+    color:var(--amber-dark);
+    width:52px;
+    flex-shrink:0;
+  }
+  .dose-name{ flex:1; font-size:.9rem; color:var(--ink); font-weight:600; }
+  .dose-status{
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    padding:3px 9px;
+    border-radius:20px;
+    flex-shrink:0;
+  }
+  .status-pending{ background:#E4DDC7; color:var(--muted); }
+  .status-taken{ background:rgba(110,139,106,0.18); color:var(--ok-sage); }
+  .status-missed{ background:rgba(192,80,60,0.15); color:var(--alert-coral); }
+
+  footer{
+    text-align:center;
+    margin-top:36px;
+    color:#7C8F86;
+    font-size:.75rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ring-banner{ animation:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="app-header">
+    <div class="eyebrow">Rx · recordatorio por horario</div>
+    <h1>Pastillero</h1>
+    <div class="sub">Indica cada cuántas horas y cuántas tomas — armamos el calendario y te avisamos a cada hora.</div>
+  </header>
+
+  <div class="permission-bar" id="permissionBar">
+    <span>Activa las notificaciones para que el aviso te llegue aunque no estés viendo esta pestaña.</span>
+    <button id="permissionBtn">Activar</button>
+  </div>
+
+  <div class="ring-banner" id="ringBanner">
+    <div>
+      <strong id="ringName">Medicamento</strong>
+      <span id="ringDetail">Es hora de tomarlo</span>
+    </div>
+    <div class="ring-actions">
+      <button class="btn-taken" id="ringTakenBtn">Marcar tomada</button>
+    </div>
+  </div>
+
+  <div class="slip">
+    <div class="slip-title">Nuevo medicamento</div>
+    <div class="field-row">
+      <div class="field">
+        <label for="pillName">Medicamento</label>
+        <input type="text" id="pillName" placeholder="Ej. Paracetamol 500mg" maxlength="60">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="startDate">Fecha de la 1.ª toma</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="field">
+        <label for="startTime">Hora de la 1.ª toma</label>
+        <input type="time" id="startTime">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="intervalHours">Cada cuántas horas</label>
+        <input type="number" id="intervalHours" min="1" max="72" step="1" placeholder="Ej. 8">
+      </div>
+      <div class="field">
+        <label for="doseCount">Cantidad de tomas</label>
+        <input type="number" id="doseCount" min="1" max="60" step="1" placeholder="Ej. 9">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="pillNote">Nota (opcional)</label>
+        <input type="text" id="pillNote" placeholder="Ej. con alimentos" maxlength="60">
+      </div>
+    </div>
+    <div class="field-hint" id="previewHint" style="margin-bottom:12px;"></div>
+    <button class="add-btn" id="addBtn">Agregar y armar calendario</button>
+  </div>
+
+  <div class="section-heading">
+    <h2>Mis medicamentos</h2>
+    <span id="medCountLabel">0 medicamentos</span>
+  </div>
+  <div id="medListContainer"></div>
+
+  <div class="section-heading">
+    <h2>Calendario de tomas</h2>
+    <span id="doseCountLabel">0 tomas</span>
+  </div>
+  <div id="calendarContainer"></div>
+
+  <footer>La alarma suena mientras esta página esté abierta en tu navegador.</footer>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'pills_v2';
+  let pills = [];
+  let currentRinging = null;
+  let audioCtx = null;
+  let ringIntervalId = null;
+  let lastCheckedMinute = null;
+
+  const medListContainer = document.getElementById('medListContainer');
+  const calendarContainer = document.getElementById('calendarContainer');
+  const medCountLabel = document.getElementById('medCountLabel');
+  const doseCountLabel = document.getElementById('doseCountLabel');
+  const permissionBar = document.getElementById('permissionBar');
+  const permissionBtn = document.getElementById('permissionBtn');
+  const ringBanner = document.getElementById('ringBanner');
+  const ringName = document.getElementById('ringName');
+  const ringDetail = document.getElementById('ringDetail');
+  const ringTakenBtn = document.getElementById('ringTakenBtn');
+  const previewHint = document.getElementById('previewHint');
+
+  function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+
+  function todayDateStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  }
+
+  document.getElementById('startDate').value = todayDateStr();
+
+  async function loadPills(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      pills = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ pills = []; }
+    render();
+  }
+
+  async function savePills(){
+    try{ await window.storage.set(STORAGE_KEY, JSON.stringify(pills), false); }
+    catch(e){ console.error('No se pudo guardar', e); }
+  }
+
+  function bottleSVG(){
+    return '<svg class="bottle-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">'
+      + '<rect x="14" y="4" width="20" height="8" rx="2" fill="#A85F27"/>'
+      + '<path d="M12 12 h24 a2 2 0 0 1 2 2 v26 a4 4 0 0 1 -4 4 H14 a4 4 0 0 1 -4 -4 V14 a2 2 0 0 1 2 -2 Z" fill="#C97A3D"/>'
+      + '<rect x="10" y="24" width="28" height="12" fill="#F1ECDE" opacity="0.92"/>'
+      + '<line x1="10" y1="24" x2="38" y2="24" stroke="#A85F27" stroke-width="1"/>'
+      + '<line x1="10" y1="36" x2="38" y2="36" stroke="#A85F27" stroke-width="1"/></svg>';
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function formatDateLabel(dateStr){
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    const isToday = dateStr === todayDateStr();
+    const label = dt.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+    return isToday ? ('Hoy · ' + label) : label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  function buildDoses(startISO, intervalHours, doseCount){
+    const doses = [];
+    const start = new Date(startISO);
+    for(let i=0; i<doseCount; i++){
+      const t = new Date(start.getTime() + i*intervalHours*60*60*1000);
+      doses.push({
+        time: t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate()) + 'T' + pad(t.getHours()) + ':' + pad(t.getMinutes()),
+        taken: false,
+        fired: false
+      });
+    }
+    return doses;
+  }
+
+  function nextPendingDose(pill){
+    const now = new Date();
+    for(const dose of pill.doses){
+      if(!dose.taken && new Date(dose.time) >= now){ return dose; }
+    }
+    return null;
+  }
+
+  function render(){
+    renderMedList();
+    renderCalendar();
+  }
+
+  function renderMedList(){
+    medCountLabel.textContent = pills.length + (pills.length === 1 ? ' medicamento' : ' medicamentos');
+
+    if(pills.length === 0){
+      medListContainer.innerHTML = '<div class="empty-state">Todavía no agregaste ningún medicamento.<br>Completa el formulario de arriba: nombre, primera toma, cada cuántas horas y cuántas tomas en total.</div>';
+      return;
+    }
+
+    medListContainer.innerHTML = pills.map(pill => {
+      const next = nextPendingDose(pill);
+      let nextLabel;
+      if(next){
+        const d = new Date(next.time);
+        const isToday = d.toDateString() === new Date().toDateString();
+        nextLabel = '<div class="pill-next"><small>Próxima toma</small>' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + (isToday ? '' : ' · ' + pad(d.getDate())+'/'+pad(d.getMonth()+1)) + '</div>';
+      } else {
+        nextLabel = '<div class="pill-next"><small>Tratamiento</small>completado</div>';
+      }
+      const meta = 'Cada ' + pill.intervalHours + ' h · ' + pill.doseCount + ' tomas' + (pill.note ? ' · ' + escapeHtml(pill.note) : '');
+      return '<div class="pill-card" data-id="'+pill.id+'">'
+        + bottleSVG()
+        + '<div class="pill-info"><div class="pill-name">'+escapeHtml(pill.name)+'</div><div class="pill-meta">'+meta+'</div></div>'
+        + nextLabel
+        + '<button class="remove-btn" data-action="remove-med" data-id="'+pill.id+'" title="Eliminar medicamento">✕</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  function renderCalendar(){
+    const now = new Date();
+    const grouped = {};
+    let totalDoses = 0;
+
+    pills.forEach(pill => {
+      pill.doses.forEach((dose, idx) => {
+        const dateStr = dose.time.slice(0,10);
+        if(!grouped[dateStr]) grouped[dateStr] = [];
+        grouped[dateStr].push({
+          pillId: pill.id,
+          pillName: pill.name,
+          doseIndex: idx,
+          time: dose.time,
+          taken: dose.taken
+        });
+        totalDoses++;
+      });
+    });
+
+    doseCountLabel.textContent = totalDoses + (totalDoses === 1 ? ' toma' : ' tomas');
+
+    const dateKeys = Object.keys(grouped).sort();
+
+    if(dateKeys.length === 0){
+      calendarContainer.innerHTML = '<div class="empty-state">Cuando agregues un medicamento, aquí vas a ver todas sus tomas organizadas por día.</div>';
+      return;
+    }
+
+    calendarContainer.innerHTML = dateKeys.map(dateStr => {
+      const items = grouped[dateStr].sort((a,b) => a.time.localeCompare(b.time));
+      const isToday = dateStr === todayDateStr();
+      const rows = items.map(item => {
+        const dt = new Date(item.time);
+        const timeLabel = pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+        let statusClass, statusText, rowClass;
+        if(item.taken){
+          statusClass = 'status-taken'; statusText = 'Tomada'; rowClass = 'taken';
+        } else if(dt < now){
+          statusClass = 'status-missed'; statusText = 'Perdida'; rowClass = 'missed';
+        } else {
+          statusClass = 'status-pending'; statusText = 'Pendiente'; rowClass = '';
+        }
+        return '<div class="dose-row '+rowClass+'">'
+          + '<div class="dose-time">'+timeLabel+'</div>'
+          + '<div class="dose-name">'+escapeHtml(item.pillName)+'</div>'
+          + '<div class="dose-status '+statusClass+'">'+statusText+'</div>'
+          + '</div>';
+      }).join('');
+      return '<div class="day-group"><div class="day-label '+(isToday?'today':'')+'">'+formatDateLabel(dateStr)+'</div>'+rows+'</div>';
+    }).join('');
+  }
+
+  medListContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action="remove-med"]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-id');
+    pills = pills.filter(p => p.id !== id);
+    if(currentRinging && currentRinging.pillId === id){
+      stopCurrentAlarm();
+    }
+    savePills();
+    render();
+  });
+
+  function updatePreview(){
+    const intervalHours = parseInt(document.getElementById('intervalHours').value, 10);
+    const doseCount = parseInt(document.getElementById('doseCount').value, 10);
+    const startDate = document.getElementById('startDate').value;
+    const startTime = document.getElementById('startTime').value;
+
+    if(!intervalHours || !doseCount || !startDate || !startTime){
+      previewHint.textContent = '';
+      return;
+    }
+    const totalHours = intervalHours * (doseCount - 1);
+    const days = Math.floor(totalHours / 24);
+    const lastDose = new Date(startDate + 'T' + startTime);
+    lastDose.setHours(lastDose.getHours() + totalHours);
+    const lastLabel = lastDose.toLocaleDateString('es-ES', {day:'numeric', month:'short'}) + ' a las ' + pad(lastDose.getHours())+':'+pad(lastDose.getMinutes());
+    previewHint.textContent = 'Se crearán ' + doseCount + ' tomas cada ' + intervalHours + ' h. La última sería el ' + lastLabel + (days > 0 ? ' (tratamiento de ~' + (days+1) + ' días).' : '.');
+  }
+  ['intervalHours','doseCount','startDate','startTime'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
+  });
+
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('pillName');
+    const startDateInput = document.getElementById('startDate');
+    const startTimeInput = document.getElementById('startTime');
+    const intervalInput = document.getElementById('intervalHours');
+    const doseCountInput = document.getElementById('doseCount');
+    const noteInput = document.getElementById('pillNote');
+
+    const name = nameInput.value.trim();
+    const startDate = startDateInput.value;
+    const startTime = startTimeInput.value;
+    const intervalHours = parseInt(intervalInput.value, 10);
+    const doseCount = parseInt(doseCountInput.value, 10);
+    const note = noteInput.value.trim();
+
+    const fields = [
+      [nameInput, !!name],
+      [startDateInput, !!startDate],
+      [startTimeInput, !!startTime],
+      [intervalInput, intervalHours > 0],
+      [doseCountInput, doseCount > 0]
+    ];
+    let firstInvalid = null;
+    fields.forEach(function(pair){
+      const el = pair[0], valid = pair[1];
+      if(!valid){
+        el.style.outline = '2px solid #C0503C';
+        setTimeout(function(){ el.style.outline=''; }, 1200);
+        if(!firstInvalid) firstInvalid = el;
+      }
+    });
+    if(firstInvalid){ firstInvalid.focus(); return; }
+
+    const startISO = startDate + 'T' + startTime;
+    const doses = buildDoses(startISO, intervalHours, doseCount);
+
+    pills.push({
+      id: uid(),
+      name: name,
+      note: note,
+      intervalHours: intervalHours,
+      doseCount: doseCount,
+      doses: doses
+    });
+
+    nameInput.value = '';
+    noteInput.value = '';
+    intervalInput.value = '';
+    doseCountInput.value = '';
+    startDateInput.value = todayDateStr();
+    startTimeInput.value = '';
+    previewHint.textContent = '';
+
+    await savePills();
+    render();
+  });
+
+  function updatePermissionBar(){
+    if(!('Notification' in window)){ permissionBar.style.display = 'none'; return; }
+    permissionBar.style.display = (Notification.permission === 'default') ? 'flex' : 'none';
+  }
+  permissionBtn.addEventListener('click', async () => {
+    if('Notification' in window){
+      await Notification.requestPermission();
+      updatePermissionBar();
+    }
+  });
+
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new Ctx();
+    }
+    if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
+    return audioCtx;
+  }
+
+  function beep(){
+    try{
+      const ctx = ensureAudioCtx();
+      const now = ctx.currentTime;
+      [0, 0.28].forEach(function(offset){
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now + offset);
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.25, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.24);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.26);
+      });
+    }catch(e){}
+  }
+
+  function startAlarmLoop(){
+    if(ringIntervalId) return;
+    beep();
+    ringIntervalId = setInterval(beep, 1200);
+  }
+  function stopAlarmLoop(){
+    if(ringIntervalId){ clearInterval(ringIntervalId); ringIntervalId = null; }
+  }
+
+  function triggerAlarm(pill, doseIndex){
+    currentRinging = { pillId: pill.id, doseIndex: doseIndex };
+    startAlarmLoop();
+
+    ringName.textContent = '💊 ' + pill.name;
+    ringDetail.textContent = pill.note ? ('Es hora de tomarlo — ' + pill.note) : 'Es hora de tomarlo';
+    ringBanner.style.display = 'flex';
+
+    if('Notification' in window && Notification.permission === 'granted'){
+      try{
+        const n = new Notification('💊 Hora de tu pastilla', {
+          body: pill.name + (pill.note ? ' — ' + pill.note : ''),
+          tag: 'pill-' + pill.id + '-' + doseIndex,
+          requireInteraction: true
+        });
+        n.onclick = function(){ window.focus(); };
+      }catch(e){}
+    }
+  }
+
+  function stopCurrentAlarm(){
+    stopAlarmLoop();
+    ringBanner.style.display = 'none';
+    currentRinging = null;
+  }
+
+  ringTakenBtn.addEventListener('click', async () => {
+    if(!currentRinging) return;
+    const pill = pills.find(function(p){ return p.id === currentRinging.pillId; });
+    if(pill && pill.doses[currentRinging.doseIndex]){
+      pill.doses[currentRinging.doseIndex].taken = true;
+    }
+    stopCurrentAlarm();
+    await savePills();
+    render();
+  });
+
+  function checkTimes(){
+    const now = new Date();
+    const currentHM = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    if(currentHM === lastCheckedMinute) return;
+    lastCheckedMinute = currentHM;
+
+    const nowStr = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + currentHM;
+
+    let changed = false;
+    pills.forEach(function(pill){
+      pill.doses.forEach(function(dose, idx){
+        if(!dose.fired && !dose.taken && dose.time === nowStr){
+          dose.fired = true;
+          changed = true;
+          triggerAlarm(pill, idx);
+        }
+      });
+    });
+    if(changed){ savePills(); render(); }
+  }
+
+  setInterval(checkTimes, 5000);
+  setInterval(function(){ renderCalendar(); }, 60000);
+
+  document.addEventListener('click', function(){ ensureAudioCtx(); }, { once: true });
+
+  updatePermissionBar();
+  loadPills();
+})();
+</script>
+
+</body>
+</html>
