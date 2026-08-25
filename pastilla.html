@@ -338,11 +338,10 @@
   <header class="app-header">
     <div class="eyebrow">Rx · recordatorio por horario</div>
     <h1>Pastillero</h1>
-    <div class="sub">Indica cada cuántas horas y cuántas tomas — armamos el calendario y te avisamos a cada hora.</div>
   </header>
 
   <div class="permission-bar" id="permissionBar">
-    <span>Activa las notificaciones para que el aviso te llegue aunque no estés viendo esta pestaña.</span>
+    <span>Activa las notificaciones</span>
     <button id="permissionBtn">Activar</button>
   </div>
 
@@ -361,7 +360,7 @@
     <div class="field-row">
       <div class="field">
         <label for="pillName">Medicamento</label>
-        <input type="text" id="pillName" placeholder="Ej. Paracetamol 500mg" maxlength="60">
+        <input type="text" id="pillName" placeholder="" maxlength="60">
       </div>
     </div>
     <div class="field-row">
@@ -377,17 +376,17 @@
     <div class="field-row">
       <div class="field">
         <label for="intervalHours">Cada cuántas horas</label>
-        <input type="number" id="intervalHours" min="1" max="72" step="1" placeholder="Ej. 8">
+        <input type="number" id="intervalHours" min="1" max="72" step="1" placeholder="">
       </div>
       <div class="field">
         <label for="doseCount">Cantidad de tomas</label>
-        <input type="number" id="doseCount" min="1" max="60" step="1" placeholder="Ej. 9">
+        <input type="number" id="doseCount" min="1" max="60" step="1" placeholder="">
       </div>
     </div>
     <div class="field-row">
       <div class="field">
         <label for="pillNote">Nota (opcional)</label>
-        <input type="text" id="pillNote" placeholder="Ej. con alimentos" maxlength="60">
+        <input type="text" id="pillNote" placeholder="" maxlength="60">
       </div>
     </div>
     <div class="field-hint" id="previewHint" style="margin-bottom:12px;"></div>
@@ -405,8 +404,6 @@
     <span id="doseCountLabel">0 tomas</span>
   </div>
   <div id="calendarContainer"></div>
-
-  <footer>La alarma suena mientras esta página esté abierta en tu navegador.</footer>
 </div>
 
 <script>
@@ -507,7 +504,7 @@
     medCountLabel.textContent = pills.length + (pills.length === 1 ? ' medicamento' : ' medicamentos');
 
     if(pills.length === 0){
-      medListContainer.innerHTML = '<div class="empty-state">Todavía no agregaste ningún medicamento.<br>Completa el formulario de arriba: nombre, primera toma, cada cuántas horas y cuántas tomas en total.</div>';
+      medListContainer.innerHTML = '<div class="empty-state">Todavía no agregaste ningún medicamento.</div>';
       return;
     }
 
@@ -556,7 +553,7 @@
     const dateKeys = Object.keys(grouped).sort();
 
     if(dateKeys.length === 0){
-      calendarContainer.innerHTML = '<div class="empty-state">Cuando agregues un medicamento, aquí vas a ver todas sus tomas organizadas por día.</div>';
+      calendarContainer.innerHTML = '<div class="empty-state">Cuando agregues un medicamento, aquí vas a ver</div>';
       return;
     }
 
